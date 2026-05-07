@@ -13,16 +13,21 @@ import {
   Cell,
 } from "recharts";
 
-//inject google fonts
-const fontLink = document.createElement("link");
-fontLink.rel = "stylesheet";
-fontLink.href =
-  "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap";
-document.head.appendChild(fontLink);
+//inject google fonts (guarded so HMR / StrictMode don't duplicate the tag)
+if (!document.getElementById("ledger-fonts")) {
+  const fontLink = document.createElement("link");
+  fontLink.id = "ledger-fonts";
+  fontLink.rel = "stylesheet";
+  fontLink.href =
+    "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap";
+  document.head.appendChild(fontLink);
+}
 
-//global css
-const globalStyle = document.createElement("style");
-globalStyle.textContent = `
+//global css (same guard)
+if (!document.getElementById("ledger-global-style")) {
+  const globalStyle = document.createElement("style");
+  globalStyle.id = "ledger-global-style";
+  globalStyle.textContent = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #F5F2EB; color: #1a1a1a; font-family: 'IBM Plex Mono', monospace; }
   ::selection { background: #1a1a1a; color: #F5F2EB; }
@@ -73,7 +78,8 @@ globalStyle.textContent = `
   ::-webkit-scrollbar-track { background: #F5F2EB; }
   ::-webkit-scrollbar-thumb { background: #ccc; }
 `;
-document.head.appendChild(globalStyle);
+  document.head.appendChild(globalStyle);
+}
 
 //constants
 const CATEGORIES = [
@@ -229,7 +235,7 @@ function AdminDashboard({ onBack }) {
                   fontWeight: u.role === "admin" ? 600 : 400,
                 }}
               >
-                {u.role.toUpperCase()}
+                {(u.role ?? "user").toUpperCase()}
               </span>
             </div>
           ))
@@ -255,7 +261,9 @@ function SpendingChart({ transactions }) {
     else monthMap[key].Expenses += val;
   });
 
-  const data = Object.values(monthMap).slice(-6);
+  // monthMap is built in transaction order (newest first, since the query
+  // orders by created_at DESC). Reverse to chronological, then take last 6.
+  const data = Object.values(monthMap).reverse().slice(-6);
   if (!data.length) return null;
 
   return (
@@ -425,6 +433,7 @@ function App() {
   const [role, setRole] = useState("user");
   const [currentView, setCurrentView] = useState("app"); //"app" or "admin"
   const [authError, setAuthError] = useState("");
+  const lastAttempt = useRef(0);
 
   //form state
   const [amount, setAmount] = useState("");
@@ -475,6 +484,7 @@ function App() {
     const { data, error } = await supabase
       .from("transactions")
       .select("*")
+      .eq("user_id", session.user.id)
       .order("created_at", { ascending: false });
     if (!error) setTransactions(data || []);
     setLoading(false);
@@ -500,7 +510,7 @@ function App() {
     if (error) {
       alert("Error: " + error.message);
     } else if (data) {
-      setTransactions([data[0], ...transactions]);
+      setTransactions((prev) => [data[0], ...prev]);
       setAmount("");
       setDescription("");
       setCategory("Other");
@@ -514,7 +524,12 @@ function App() {
   }
 
   async function handleAuth(e) {
+    // preventDefault MUST come before any early return, otherwise the browser
+    // performs a native form submit and reloads the page.
     e.preventDefault();
+    const now = Date.now();
+    if (now - lastAttempt.current < 2000) return;
+    lastAttempt.current = now;
     setAuthError(""); // clear on each attempt
     const email = e.target.email.value;
     const password = e.target.password.value;
