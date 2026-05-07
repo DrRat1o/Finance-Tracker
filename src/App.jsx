@@ -424,6 +424,7 @@ function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [role, setRole] = useState("user");
   const [currentView, setCurrentView] = useState("app"); //"app" or "admin"
+  const [authError, setAuthError] = useState("");
 
   //form state
   const [amount, setAmount] = useState("");
@@ -514,20 +515,43 @@ function App() {
 
   async function handleAuth(e) {
     e.preventDefault();
+    setAuthError(""); // clear on each attempt
     const email = e.target.email.value;
     const password = e.target.password.value;
     const clickedButton = e.nativeEvent.submitter.innerText;
 
     if (clickedButton === "SIGN UP") {
+      // Password validation
+      if (password.length < 8) {
+        setAuthError("Password must be at least 8 characters.");
+        return;
+      }
+      if (!/[A-Z]/.test(password)) {
+        setAuthError("Password must contain at least one uppercase letter.");
+        return;
+      }
+      if (!/[a-z]/.test(password)) {
+        setAuthError("Password must contain at least one lowercase letter.");
+        return;
+      }
+      if (!/[0-9]/.test(password)) {
+        setAuthError("Password must contain at least one number.");
+        return;
+      }
+      if (!/[^A-Za-z0-9]/.test(password)) {
+        setAuthError("Password must contain at least one symbol.");
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({ email, password });
-      if (error) alert(error.message);
-      else alert("Account created! You can now log in.");
+      if (error) setAuthError(error.message);
+      else setAuthError("Account created! You can now log in.");
     } else {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      if (error) alert(error.message);
+      if (error) setAuthError(error.message);
     }
   }
 
@@ -638,6 +662,24 @@ function App() {
             required
             style={s.input}
           />
+
+          {authError && (
+            <div
+              style={{
+                fontSize: 10,
+                letterSpacing: "0.1em",
+                color: authError.startsWith("Account") ? "#555" : "#c0392b",
+                border: `1px solid ${authError.startsWith("Account") ? "#ccc" : "#f5c6c6"}`,
+                background: authError.startsWith("Account")
+                  ? "#f9f9f9"
+                  : "#fff5f5",
+                padding: "8px 12px",
+              }}
+            >
+              {authError.toUpperCase()}
+            </div>
+          )}
+
           <button
             type="submit"
             className="login-btn"
