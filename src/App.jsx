@@ -72,6 +72,22 @@ globalStyle.textContent = `
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: #F5F2EB; }
   ::-webkit-scrollbar-thumb { background: #ccc; }
+
+  input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='20' viewBox='0 0 12 20'%3E%3Cpath d='M6 4l4 5H2l4-5z' fill='%23888'/%3E%3Cpath d='M6 16l-4-5h8l-4 5z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 12px;
+  padding-right: 24px;
+}
 `;
 document.head.appendChild(globalStyle);
 
