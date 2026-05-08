@@ -1,12 +1,15 @@
 # 💰 The Ledger
 
 > A simple personal finance tracker built with React and Supabase.
+>
+> **[Live Demo →](https://finance-tracker-three-gamma.vercel.app/)**
 
 <p align="center">
   <img src="https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
   <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
   <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
   <img src="https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" />
 </p>
 
 ---
@@ -27,8 +30,10 @@ A lot of this project was also me learning by breaking things repeatedly and the
 
 - Sign up and login using Supabase Auth
 - Persistent user sessions
-- Password strength validation during signup
+- Password strength validation during signup — minimum 8 characters, uppercase, lowercase, digit, and symbol required
 - Simple role-based access (`user` / `admin`)
+- Client-side rate limiting on auth form to prevent rapid-fire attempts
+- Inline UI error messages instead of browser alerts
 
 ### 💸 Transactions
 
@@ -37,6 +42,7 @@ A lot of this project was also me learning by breaking things repeatedly and the
 - Categorise transactions
 - Real-time balance calculation
 - Filter by category and type
+- Input sanitization — description trimmed and capped at 500 characters, amount validated as a positive number not exceeding 1,000,000
 
 ### 📊 Analytics
 
@@ -46,11 +52,13 @@ A lot of this project was also me learning by breaking things repeatedly and the
 
 ### 🛡️ Security
 
-- Row Level Security (RLS) enabled on database tables
-- Database validation using PostgreSQL constraints
-- Users can only access their own data
-- Secure handling of environment variables
-- Input validation before database operations
+- Row Level Security (RLS) enabled on both `transactions` and `profiles` tables with correct per-user scoping
+- Database-level `CHECK` constraints enforcing valid `type`, `category`, positive `amount`, max amount of 1,000,000, and description capped at 500 characters
+- `handle_new_user()` trigger hardened — fixed search path vulnerability and revoked public/authenticated/anon execute permissions
+- `.eq("user_id", session.user.id)` filter on transaction queries as defence-in-depth on top of RLS
+- Sensitive state (transactions, role, form fields) fully cleared on sign out
+- Environment variables kept out of version control — `.env` in `.gitignore`, scrubbed from git history
+- No credentials or sensitive values logged to the browser console
 
 ---
 
@@ -64,6 +72,7 @@ A lot of this project was also me learning by breaking things repeatedly and the
 | Authentication | Supabase Auth |
 | Charts         | Recharts      |
 | Styling        | CSS           |
+| Deployment     | Vercel        |
 
 ---
 
@@ -79,7 +88,7 @@ src/
 
 ---
 
-## ⚙️ Running the Project
+## ⚙️ Running Locally
 
 ### Requirements
 
@@ -120,8 +129,6 @@ Start the development server:
 npm run dev
 ```
 
-The app should now run locally in your browser.
-
 ---
 
 ## 🗂️ Database Tables
@@ -157,7 +164,7 @@ Things I would like to add later:
 - [ ] CSV export
 - [ ] Dark mode
 - [ ] Better mobile responsiveness
-- [ ] Public deployment
+- [x] Public deployment
 
 The list keeps growing faster than my ability to finish it, which seems to be a common programming experience.
 
@@ -172,6 +179,10 @@ This project helped me learn:
 - Basics of PostgreSQL and database security
 - The difference between client-side and server-side validation
 - How Row Level Security works in Supabase
+- How to harden a database trigger and manage function permissions
+- Why defence-in-depth matters — validating at the client, server, and database level
+- How to scrub secrets from git history
+- How to deploy a full-stack app to production
 - Better project structure and state management
 
 It also taught me that database policies can break your app in extremely creative ways.
