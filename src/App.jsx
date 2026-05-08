@@ -74,7 +74,7 @@ globalStyle.textContent = `
   ::-webkit-scrollbar-thumb { background: #ccc; }
 
   input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+  input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
@@ -864,7 +864,16 @@ function App() {
             placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            style={{ ...s.input, flex: 1, minWidth: 80 }}
+            style={{
+              ...s.input,
+              flex: 1,
+              minWidth: 80,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='18' viewBox='0 0 10 18'%3E%3Cpolygon points='5,2 9,8 1,8' fill='%23888'/%3E%3Cpolygon points='5,16 1,10 9,10' fill='%23888'/%3E%3C/svg%3E")`,
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 8px center",
+              backgroundSize: "10px 18px",
+              paddingRight: 26,
+            }}
           />
           <select
             value={type}
